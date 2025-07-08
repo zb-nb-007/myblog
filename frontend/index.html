@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人博客</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <div id="tech-docs" class="page active">
+                <h1>技术文档</h1>
+                <div class="doc-list" id="doc-list">
+                    <!-- 文档列表将通过JavaScript动态生成 -->
+                </div>
+                <button id="add-doc-btn" class="add-btn">+ 添加文档</button>
+            </div>
+            
+            <div id="tools" class="page">
+                <h1>推荐工具</h1>
+                <div class="tools-list">
+                    <!-- 工具列表将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            
+            <div id="profile" class="page">
+                <h1>个人中心</h1>
+                <div class="profile-info">
+                    <div class="avatar">
+                        <img src="./images/avatar.svg" alt="头像" id="avatar-img">
+                    </div>
+                    <h2 id="username">用户名</h2>
+                    <p id="user-bio">这里是个人简介</p>
+                    <button id="edit-profile-btn" class="btn">编辑资料</button>
+                </div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-count" id="doc-count">0</span>
+                        <span class="stat-label">文档</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-count" id="tool-count">0</span>
+                        <span class="stat-label">工具</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- 底部导航栏 -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" data-target="tech-docs">
+                <i class="icon-docs"></i>
+                <span>技术文档</span>
+            </div>
+            <div class="nav-item" data-target="tools">
+                <i class="icon-tools"></i>
+                <span>推荐工具</span>
+            </div>
+            <div class="nav-item" data-target="profile">
+                <i class="icon-profile"></i>
+                <span>个人中心</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- 文档编辑弹窗 -->
+    <div class="modal" id="doc-modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>编辑文档</h2>
+            <div class="form-group">
+                <label for="doc-title">标题</label>
+                <input type="text" id="doc-title" placeholder="请输入文档标题">
+            </div>
+            <div class="form-group">
+                <label for="doc-content">内容</label>
+                <textarea id="doc-content" placeholder="请输入文档内容"></textarea>
+            </div>
+            <button id="save-doc-btn" class="btn">保存</button>
+        </div>
+    </div>
+
+    <!-- 文档类型选择弹窗 -->
+    <div class="modal" id="doc-type-modal">
+        <div class="modal-content">
+            <h2>选择文档类型</h2>
+            <div class="tag-options">
+                <div class="tag-option" data-tag="前端">前端</div>
+                <div class="tag-option" data-tag="java">Java</div>
+                <div class="tag-option" data-tag="python">Python</div>
+                <div class="tag-option" data-tag="运维技术">运维技术</div>
+                <div class="tag-option" data-tag="ai">AI</div>
+                <div class="tag-option" data-tag="职业规划">职业规划</div>
+                <div class="tag-option" data-tag="总结归纳">总结归纳</div>
+            </div>
+            <button id="confirm-tag-btn" class="btn">确认</button>
+        </div>
+    </div>
+
+    <!-- 个人资料编辑弹窗 -->
+    <div class="modal" id="profile-modal">
+        <div class="modal-content">
+            <span class="close-profile-btn close-btn">&times;</span>
+            <h2>编辑个人资料</h2>
+            <div class="form-group">
+                <label for="profile-name">用户名</label>
+                <input type="text" id="profile-name" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label for="profile-bio">个人简介</label>
+                <textarea id="profile-bio" placeholder="请输入个人简介"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="profile-avatar">头像URL</label>
+                <input type="text" id="profile-avatar" placeholder="请输入头像图片URL">
+                <p class="input-tip">留空则使用默认头像</p>
+            </div>
+            <button id="save-profile-btn" class="btn">保存</button>
+        </div>
+    </div>
+
+    <script src="./js/app.js"></script>
+</body>
+</html>

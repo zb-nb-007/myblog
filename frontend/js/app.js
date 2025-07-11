@@ -1,3 +1,8 @@
+// 存储文档数据
+const API_BASE_URL = 'http://localhost:5000';
+
+let documents = JSON.parse(localStorage.getItem('blog-documents')) || [];
+
 // 存储工具数据
 let tools = JSON.parse(localStorage.getItem('blog-tools')) || [
     {
@@ -98,8 +103,8 @@ let tools = JSON.parse(localStorage.getItem('blog-tools')) || [
     }
 ];
 
-// 用户数据
-let user = JSON.parse(localStorage.getItem('blog-user')) || {
+// 用户数据 (不再需要登录，直接使用默认值)
+let user = {
     name: '技术爱好者',
     bio: '热爱编程和技术分享',
     avatar: './images/avatar.svg'
@@ -136,12 +141,74 @@ const editProfileBtn = document.getElementById('edit-profile-btn');
 let currentDocId = null;
 let selectedTag = null;
 
+// 从服务器获取文档数据
+async function fetchDocuments() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/documents`);
+        
+        if (response.ok) {
+            const data = await response.json();
+            documents = data;
+            localStorage.setItem('blog-documents', JSON.stringify(documents));
+            renderDocuments();
+            updateStats();
+        }
+    } catch (err) {
+        console.error('获取文档失败:', err);
+    }
+}
+
+// 从服务器获取工具数据
+async function fetchTools() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/tools`);
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data && data.length > 0) {
+                tools = data;
+                localStorage.setItem('blog-tools', JSON.stringify(tools));
+                renderTools();
+                updateStats();
+            } else {
+                // 如果服务器没有工具数据，则上传本地数据到服务器
+                await uploadToolsToServer();
+            }
+        }
+    } catch (err) {
+        console.error('获取工具失败:', err);
+    }
+}
+
+// 上传工具数据到服务器
+async function uploadToolsToServer() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/tools/batch`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(tools)
+        });
+        
+        if (response.ok) {
+            console.log('工具数据已上传到服务器');
+        }
+    } catch (err) {
+        console.error('上传工具数据失败:', err);
+    }
+}
+
 // 初始化应用
-function initApp() {
+async function initApp() {
     renderDocuments();
     renderTools();
     updateUserInfo();
     updateStats();
+    
+    // 从服务器获取数据
+    await fetchDocuments();
+    await fetchTools();
     
     // 设置默认页面
     showPage('tech-docs');
@@ -319,29 +386,7 @@ function saveProfile() {
     closeProfileModal();
 }
 
-// 替换原有的localStorage操作
-async function saveDocument(title, content, tag) {
-  try {
-    const response = await fetch('/api/documents', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify({ title, content, tag })
-    });
-    
-    if (!response.ok) throw new Error('保存失败');
-    
-    const data = await response.json();
-    return data._id;
-  } catch (err) {
-    console.error('保存文档错误:', err);
-    throw err;
-  }
-}
-
-function saveDocument() {
+async function saveDocument() {
     const title = docTitleInput.value.trim();
     const content = docContentInput.value.trim();
     
@@ -360,7 +405,7 @@ function saveDocument() {
 }
 
 // 确认文档类型并最终保存
-function confirmDocType() {
+async function confirmDocType() {
     if (!selectedTag) {
         alert('请选择一个文档类型');
         return;
@@ -368,41 +413,56 @@ function confirmDocType() {
     
     const title = docTitleInput.value.trim();
     const content = docContentInput.value.trim();
+
     
-    if (currentDocId) {
-        // 更新现有文档
-        const index = documents.findIndex(doc => doc.id === currentDocId);
-        if (index !== -1) {
-            documents[index] = {
-                ...documents[index],
-                title,
-                content,
-                tag: selectedTag,
-                updatedAt: Date.now()
-            };
+    try {
+        if (currentDocId) {
+            // 更新现有文档
+            const response = await fetch(`${API_BASE_URL}/api/documents/${currentDocId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title, content, tag: selectedTag })
+            });
+            
+            if (!response.ok) throw new Error('更新文档失败');
+            
+            // 更新本地数据
+            const updatedDoc = await response.json();
+            const index = documents.findIndex(doc => doc._id === currentDocId);
+            if (index !== -1) {
+                documents[index] = updatedDoc;
+            }
+        } else {
+            // 创建新文档
+            const response = await fetch(`${API_BASE_URL}/api/documents`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title, content, tag: selectedTag })
+            });
+            
+            if (!response.ok) throw new Error('创建文档失败');
+            
+            // 添加到本地数据
+            const newDoc = await response.json();
+            documents.unshift(newDoc);
         }
-    } else {
-        // 创建新文档
-        const newDoc = {
-            id: Date.now().toString(),
-            title,
-            content,
-            tag: selectedTag,
-            createdAt: Date.now(),
-            updatedAt: Date.now()
-        };
         
-        documents.unshift(newDoc);
+        // 保存到本地存储
+        localStorage.setItem('blog-documents', JSON.stringify(documents));
+        
+        // 更新UI
+        renderDocuments();
+        updateStats();
+        
+        closeDocTypeModal();
+    } catch (err) {
+        console.error('保存文档错误:', err);
+        alert('保存文档失败: ' + err.message);
     }
-    
-    // 保存到本地存储
-    localStorage.setItem('blog-documents', JSON.stringify(documents));
-    
-    // 更新UI
-    renderDocuments();
-    updateStats();
-    
-    closeDocTypeModal();
 }
 
 // 事件监听
@@ -453,8 +513,4 @@ if (!localStorage.getItem('blog-documents')) {
 
 if (!localStorage.getItem('blog-tools')) {
     localStorage.setItem('blog-tools', JSON.stringify(tools));
-}
-
-if (!localStorage.getItem('blog-user')) {
-    localStorage.setItem('blog-user', JSON.stringify(user));
 }
